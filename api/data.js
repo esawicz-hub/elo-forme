@@ -42,7 +42,9 @@ export default async function handler(req, res) {
       if (!body || typeof body !== 'object' || !body.days) {
         return res.status(400).json({ error: 'Invalid state' });
       }
-      if (!body.lastModified) body.lastModified = Date.now();
+      // Le serveur écrase TOUJOURS le timestamp pour éviter les soucis de
+      // dérive d'horloge entre clients (ordi vs iPhone).
+      body.lastModified = Date.now();
       await r.set(KEY, JSON.stringify(body));
       return res.status(200).json({ ok: true, lastModified: body.lastModified });
     }
