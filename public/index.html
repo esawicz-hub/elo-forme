@@ -273,12 +273,37 @@
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sport-name.reported {
+    color: var(--accent);
+  }
+
+  .reported-badge {
+    display: inline-block;
+    background: rgba(255, 140, 66, 0.15);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 140, 66, 0.3);
   }
 
   .sport-detail {
     color: var(--muted-2);
     font-size: 14px;
     margin-bottom: 16px;
+  }
+
+  .sport-detail.reported {
+    color: var(--accent);
   }
 
   /* CHECKBOX */
@@ -1197,44 +1222,48 @@ const PHASE_BY_WEEK = {
 // 0 = dimanche, 1 = lundi, ..., 6 = samedi
 const SCHEDULES = {
   // Phase 1 — Mise en route (semaines 1-2)
+  // Lun marche / Mar circuit / Mer ellip / Jeu REPOS / Ven marche / Sam circuit / Dim MARCHE
   1: {
     1: { sport: 'Marche 45 min', detail: 'Rythme soutenu, 120-130 bpm' },
     2: { sport: 'Circuit cuisses 15 min', detail: 'Squats 3x15 / Fentes 3x10 / Pont fessier 3x20' },
     3: { sport: 'Elliptique 30 min', detail: 'Résistance moyenne, pousse sur les jambes' },
-    4: { sport: 'Repos actif', detail: 'Brossage à sec + étirements 10 min' },
+    4: { sport: 'Repos', detail: 'Hydratation, brossage à sec, étirements doux' },
     5: { sport: 'Marche 50 min', detail: 'Terrain varié si possible' },
     6: { sport: 'Circuit jambes 15 min', detail: 'Montées de chaise 3x15 / Sumo squat 3x15 / Kicks arrière 3x15' },
-    0: { sport: 'Repos', detail: 'Hydratation, crème, récup' }
+    0: { sport: 'Marche 45 min', detail: 'Rythme libre, dehors si possible. Plaisir.' }
   },
   // Phase 2 — Montée en charge (semaines 3-4)
+  // Lun marche / Mar circuit / Mer ellip / Jeu REPOS / Ven circuit / Sam marche longue / Dim MARCHE récup
   2: {
     1: { sport: 'Marche 55 min', detail: 'Intervalles : 5 min rapide / 2 min normal' },
     2: { sport: 'Circuit cuisses 20 min', detail: '+1 série partout / ajout inner thigh lift 3x15' },
     3: { sport: 'Elliptique 35 min', detail: '2 min résistance haute / 1 min normale en alternance' },
-    4: { sport: 'Marche 30 min', detail: 'Allure tranquille, récup active' },
+    4: { sport: 'Repos', detail: 'Brossage à sec + douche froide jambes + étirements' },
     5: { sport: 'Circuit jambes 20 min', detail: 'Squats sautés 3x10 / Fentes latérales 3x12 / Pont fessier une jambe 3x10' },
     6: { sport: 'Marche longue 1h+', detail: 'Avec Poupoutche si sec' },
-    0: { sport: 'Repos', detail: 'Brossage à sec + douche froide jambes' }
+    0: { sport: 'Marche 30 min récup', detail: 'Allure tranquille, sans forcer' }
   },
   // Phase 3 — Accélération (semaines 5-6)
+  // Lun ellip / Mar circuit / Mer marche / Jeu REPOS / Ven ellip / Sam circuit / Dim MARCHE
   3: {
     1: { sport: 'Elliptique 40 min', detail: 'Full intervalles, résistance haute' },
     2: { sport: 'Circuit complet 25 min', detail: 'Tous les exercices enchaînés, 45s repos entre séries' },
     3: { sport: 'Marche 1h', detail: 'Terrain varié, rythme soutenu' },
-    4: { sport: 'Circuit jambes 20 min', detail: 'Focus intérieur cuisses + fessiers' },
+    4: { sport: 'Repos', detail: 'Brossage + huile bouleau + étirements' },
     5: { sport: 'Elliptique 30 min', detail: 'Résistance maximale supportable' },
-    6: { sport: 'Marche 45 min', detail: 'Rythme libre' },
-    0: { sport: 'Repos', detail: 'Brossage + huile bouleau + étirements' }
+    6: { sport: 'Circuit jambes 20 min', detail: 'Focus intérieur cuisses + fessiers' },
+    0: { sport: 'Marche 45 min', detail: 'Rythme libre' }
   },
-  // Phase 4 — Affinage (semaine 7)
+  // Phase 4 — Hellfest (semaine 7)
+  // Lun-Mar-Mer prep, Jeu→Dim Hellfest J1→J4 (18-21 juin 2026)
   4: {
-    1: { sport: 'Marche 45 min', detail: 'Modéré' },
+    1: { sport: 'Marche 45 min', detail: 'Tapering — modéré' },
     2: { sport: 'Circuit léger 15 min', detail: 'Pas d\'épuisement' },
-    3: { sport: 'Elliptique 25 min', detail: 'Résistance moyenne' },
-    4: { sport: 'Repos actif', detail: 'Étirements, soins' },
-    5: { sport: 'Marche 30 min légère', detail: 'Détente' },
-    6: { sport: 'Hellfest J1', detail: 'Tu marches déjà 15 km !' },
-    0: { sport: 'Hellfest J2', detail: 'Marche intensive sur place' }
+    3: { sport: 'Marche 30 min légère', detail: 'Détente, derniers étirements avant Hellfest' },
+    4: { sport: 'Hellfest J1', detail: 'C\'est parti ! Hydrate, ménage tes appuis, profite.' },
+    5: { sport: 'Hellfest J2', detail: 'Marche intensive sur place — sois stratégique' },
+    6: { sport: 'Hellfest J3', detail: 'Endurance, hydratation, récup express le soir' },
+    0: { sport: 'Hellfest J4', detail: 'Dernier round, va au bout' }
   }
 };
 
@@ -1482,12 +1511,51 @@ function getPhaseNumber(week) {
   return null;
 }
 
-function getScheduleForDate(date) {
+// Schedule "brut" tel que défini dans SCHEDULES, sans logique de report.
+function getBaseScheduleForDate(date) {
   const week = getWeekNumber(date);
   const phase = getPhaseNumber(week);
   if (!phase) return { sport: 'Hors programme', detail: 'Repos / hors période' };
   const dow = date.getDay();
   return SCHEDULES[phase][dow];
+}
+
+// Schedule effectif : si la journée est un jour de repos ET qu'il y a une marche
+// non faite plus tôt cette semaine, on remplace par la marche manquée.
+// Permet à la semaine de se rééquilibrer naturellement.
+function getScheduleForDate(date) {
+  const base = getBaseScheduleForDate(date);
+  if (!base) return base;
+
+  const isRest = base.sport && base.sport.toLowerCase().includes('repos');
+  if (!isRest) return base;
+
+  // Cherche une marche non faite plus tôt dans la semaine (avant cette date).
+  const weekStart = getMondayOfWeek(date);
+  const dateStr = ymd(date);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    if (ymd(d) >= dateStr) break; // ne regarde que les jours strictement antérieurs
+    const sched = getBaseScheduleForDate(d);
+    if (!sched || !sched.sport) continue;
+    const sportLower = sched.sport.toLowerCase();
+    if (!sportLower.includes('marche')) continue;
+    // Cette journée avait une marche planifiée. Vérifier si elle a été faite.
+    const data = getDay(ymd(d));
+    if (data.sport) continue; // déjà faite, on passe
+    // Marche manquée trouvée → on la reporte sur ce jour de repos.
+    const dayName = d.toLocaleDateString('fr-FR', { weekday: 'long' });
+    return {
+      sport: sched.sport + ' ↻',
+      detail: 'Marche reportée du ' + dayName + ' — tu peux la rattraper aujourd\'hui. (Plan initial : repos)',
+      isReported: true,
+      originalSport: sched.sport,
+      reportedFromDay: dayName
+    };
+  }
+
+  return base;
 }
 
 function formatFRDate(date) {
@@ -1517,9 +1585,19 @@ function renderToday() {
   document.getElementById('date-week-label').textContent = week >= 1 && week <= 7 ? 'Semaine ' + week : 'Hors programme';
   document.getElementById('date-phase-label').textContent = phase ? PHASE_BY_WEEK[week] : '—';
 
-  // Sport
-  document.getElementById('sport-name').textContent = schedule.sport;
-  document.getElementById('sport-detail').textContent = schedule.detail;
+  // Sport (avec indicateur si c'est un rattrapage de marche manquée)
+  const sportNameEl = document.getElementById('sport-name');
+  const sportDetailEl = document.getElementById('sport-detail');
+  if (schedule.isReported) {
+    sportNameEl.innerHTML = '<span>' + schedule.originalSport + '</span><span class="reported-badge">Rattrapage</span>';
+    sportNameEl.classList.add('reported');
+    sportDetailEl.classList.add('reported');
+  } else {
+    sportNameEl.textContent = schedule.sport;
+    sportNameEl.classList.remove('reported');
+    sportDetailEl.classList.remove('reported');
+  }
+  sportDetailEl.textContent = schedule.detail;
   document.getElementById('check-sport').checked = dayData.sport;
   document.getElementById('sport-status').textContent = dayData.sport ? '✓ Fait' : '';
 
@@ -1948,12 +2026,13 @@ function renderProgress() {
     }
   }
 
-  // Sport prévues à ce jour
+  // Sport prévues à ce jour (utilise le schedule de BASE pour ne pas compter
+  // les rééquilibrages dynamiques comme du sport "planifié").
   let sportPlanned = 0;
   for (let i = 0; i <= Math.min(getProgramDay(today), TOTAL_DAYS - 1); i++) {
     const d = new Date(PROGRAM_START);
     d.setDate(d.getDate() + i);
-    const sched = getScheduleForDate(d);
+    const sched = getBaseScheduleForDate(d);
     if (sched.sport && !sched.sport.toLowerCase().includes('repos')) sportPlanned++;
   }
 
