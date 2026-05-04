@@ -315,6 +315,76 @@
     color: var(--accent);
   }
 
+  /* WATCH CARD */
+  .watch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 380px) {
+    .watch-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .watch-stat {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
+  .watch-stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .watch-stat-label {
+    font-size: 10px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  .watch-rings {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 4px 0;
+  }
+
+  .watch-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .watch-ring-svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .watch-ring-label {
+    font-size: 10px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  #watch-updated {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+  }
+
   /* CHECKBOX */
   .check-row {
     display: flex;
@@ -1017,6 +1087,33 @@
       </label>
     </div>
 
+    <!-- WATCH (Apple Health auto-push) -->
+    <div class="card watch-card" id="watch-card" style="display:none;">
+      <div class="card-header">
+        <div class="card-title">Activité Watch</div>
+        <div class="card-status" id="watch-updated"></div>
+      </div>
+      <div class="watch-grid">
+        <div class="watch-stat">
+          <div class="watch-stat-value" id="watch-steps">—</div>
+          <div class="watch-stat-label">pas</div>
+        </div>
+        <div class="watch-stat">
+          <div class="watch-stat-value" id="watch-distance">—</div>
+          <div class="watch-stat-label">km</div>
+        </div>
+        <div class="watch-stat">
+          <div class="watch-stat-value" id="watch-kcal">—</div>
+          <div class="watch-stat-label">kcal active</div>
+        </div>
+        <div class="watch-stat">
+          <div class="watch-stat-value" id="watch-exercise">—</div>
+          <div class="watch-stat-label">min sport</div>
+        </div>
+      </div>
+      <div class="watch-rings" id="watch-rings"></div>
+    </div>
+
     <!-- CALORIES -->
     <div class="card">
       <div class="card-header">
@@ -1655,6 +1752,9 @@ function renderToday() {
   renderCalories();
   renderMeals();
 
+  // Watch (Apple Health auto-push)
+  renderWatch();
+
   // Re-bind handlers
   bindTodayHandlers();
 }
@@ -1705,6 +1805,74 @@ function renderCalories() {
   } else {
     remEl.textContent = `+${Math.abs(remaining)} au-dessus`;
     remEl.classList.add('over');
+  }
+}
+
+// ============================
+// WATCH (Apple Health)
+// ============================
+function ringSvg(value, goal, color) {
+  const pct = goal > 0 ? Math.min(1, value / goal) : 0;
+  const r = 18, c = 2 * Math.PI * r;
+  const dash = c * pct;
+  return `<svg class="watch-ring-svg" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="${r}" fill="none" stroke="${color}" stroke-opacity="0.18" stroke-width="5"/>
+    <circle cx="24" cy="24" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+            stroke-linecap="round" stroke-dasharray="${dash} ${c}"
+            transform="rotate(-90 24 24)"/>
+  </svg>`;
+}
+
+function renderWatch() {
+  const dayData = getDay(ymd(currentDate));
+  const h = dayData.health;
+  const card = document.getElementById('watch-card');
+
+  if (!h || (h.steps == null && h.activeKcal == null && h.distance == null && h.exerciseMin == null)) {
+    // Pas de données pour ce jour → on cache la carte
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+
+  // Stats numériques
+  document.getElementById('watch-steps').textContent =
+    h.steps != null ? h.steps.toLocaleString('fr-FR') : '—';
+  document.getElementById('watch-distance').textContent =
+    h.distance != null ? h.distance.toFixed(1) : '—';
+  document.getElementById('watch-kcal').textContent =
+    h.activeKcal != null ? Math.round(h.activeKcal) : '—';
+  document.getElementById('watch-exercise').textContent =
+    h.exerciseMin != null ? Math.round(h.exerciseMin) : '—';
+
+  // Anneaux Apple (rouge=move, vert=exercise, bleu=stand)
+  const ringsEl = document.getElementById('watch-rings');
+  const moveGoal = h.moveGoal || 500;
+  const exGoal = h.exerciseGoal || 30;
+  const standGoal = h.standGoal || 12;
+  ringsEl.innerHTML = `
+    <div class="watch-ring">
+      ${ringSvg(h.activeKcal || 0, moveGoal, '#ff2d55')}
+      <div class="watch-ring-label">${Math.round(h.activeKcal || 0)}/${moveGoal}</div>
+    </div>
+    <div class="watch-ring">
+      ${ringSvg(h.exerciseMin || 0, exGoal, '#a4e83a')}
+      <div class="watch-ring-label">${Math.round(h.exerciseMin || 0)}/${exGoal}</div>
+    </div>
+    <div class="watch-ring">
+      ${ringSvg(h.standHours || 0, standGoal, '#3bdaff')}
+      <div class="watch-ring-label">${Math.round(h.standHours || 0)}/${standGoal}h</div>
+    </div>
+  `;
+
+  // Timestamp dernière mise à jour
+  if (h.updatedAt) {
+    const d = new Date(h.updatedAt);
+    const fmt = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('watch-updated').textContent = 'maj ' + fmt;
+  } else {
+    document.getElementById('watch-updated').textContent = '';
   }
 }
 
