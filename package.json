@@ -1,0 +1,9 @@
+{
+  "name": "elo-forme",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suivi sport/nutrition 7 semaines — Hellfest 2026",
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  }
+}
