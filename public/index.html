@@ -1473,6 +1473,12 @@ function getTargetForDate(date) {
   return isSportDay(date) ? settings.kcalTargetSport : settings.kcalTargetRest;
 }
 
+// True si c'est un jour Hellfest (J1-J4). Ces jours-là on désactive le tracking kcal.
+function isHellfestDay(date) {
+  const sched = getBaseScheduleForDate(date);
+  return !!(sched && sched.sport && sched.sport.toLowerCase().includes('hellfest'));
+}
+
 function setDay(dateStr, dayData) {
   const state = loadState();
   state.days[dateStr] = dayData;
@@ -1657,17 +1663,30 @@ function renderCalories() {
   const dayData = getDay(ymd(currentDate));
   const meals = dayData.meals || [];
   const total = meals.reduce((s, m) => s + (parseInt(m.kcal) || 0), 0);
+  const fill = document.getElementById('cal-fill');
+  const remEl = document.getElementById('cal-remaining');
+
+  // Mode Hellfest : pas de cible, pas de tracking strict.
+  // Tu peux quand même logger des repas si tu veux, mais sans pression.
+  if (isHellfestDay(currentDate)) {
+    document.getElementById('cal-current').textContent = total || '—';
+    document.getElementById('cal-target-display').textContent = '🤘';
+    fill.style.width = '0%';
+    fill.classList.remove('over');
+    remEl.textContent = 'Hellfest mode — profite, mange ce qui passe';
+    remEl.classList.remove('over');
+    return;
+  }
+
   const target = getTargetForDate(currentDate);
   const remaining = target - total;
   const pct = Math.min(100, (total / target) * 100);
 
   document.getElementById('cal-current').textContent = total;
   document.getElementById('cal-target-display').textContent = target;
-  const fill = document.getElementById('cal-fill');
   fill.style.width = pct + '%';
   fill.classList.toggle('over', total > target);
 
-  const remEl = document.getElementById('cal-remaining');
   if (total === 0) {
     remEl.textContent = '';
     remEl.classList.remove('over');
@@ -2016,11 +2035,11 @@ function renderProgress() {
       totalWater += data.water * 0.25;
       waterDays++;
     }
-    if (data.meals && data.meals.length > 0) {
+    if (data.meals && data.meals.length > 0 && !isHellfestDay(d)) {
+      // On exclut les jours Hellfest des stats kcal (mode free zone)
       const dayKcal = data.meals.reduce((s, m) => s + (parseInt(m.kcal) || 0), 0);
       totalCal += dayKcal;
       calDays++;
-      // Cible spécifique au jour (sport ou repos)
       const dayTarget = getTargetForDate(d);
       if (dayKcal > 0 && dayKcal <= dayTarget) underTargetDays++;
     }
