@@ -1157,13 +1157,20 @@
   </div>
 </div>
 
-<!-- MODAL : OBJECTIF CALORIQUE -->
+<!-- MODAL : OBJECTIF CALORIQUE (variable sport/repos) -->
 <div class="modal-overlay" id="target-modal">
   <div class="modal">
     <h3>Objectif calorique</h3>
+    <p style="color: var(--muted-2); font-size: 13px; margin-bottom: 14px;">
+      Cible adaptée selon les jours du programme : un peu plus les jours sport (récup), un peu moins les jours repos.
+    </p>
     <div class="field">
-      <label>Calories par jour (kcal)</label>
-      <input type="number" id="target-input" placeholder="1500" inputmode="numeric">
+      <label>Jours sport (kcal)</label>
+      <input type="number" id="target-input-sport" placeholder="1650" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Jours repos (kcal)</label>
+      <input type="number" id="target-input-rest" placeholder="1450" inputmode="numeric">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="target-cancel">Annuler</button>
@@ -1405,13 +1412,36 @@ function getDay(dateStr) {
 
 function getSettings() {
   const state = loadState();
-  return state.settings || { kcalTarget: 1500 };
+  const s = state.settings || {};
+  // Backward compat : si vieille clé kcalTarget unique, l'utiliser comme repos
+  return {
+    kcalTargetSport: s.kcalTargetSport ?? (s.kcalTarget ? s.kcalTarget + 100 : 1650),
+    kcalTargetRest:  s.kcalTargetRest  ?? (s.kcalTarget ? s.kcalTarget - 100 : 1450)
+  };
 }
 
 function setSettings(settings) {
   const state = loadState();
   state.settings = settings;
   saveState(state);
+}
+
+// True si le jour est un jour de sport selon le SCHEDULES (pas un jour de repos).
+function isSportDay(date) {
+  const sched = getScheduleForDate(date);
+  if (!sched || !sched.sport) return false;
+  const s = sched.sport.toLowerCase();
+  // "Repos" et "Repos actif" comptent comme jours repos.
+  if (s.includes('repos')) return false;
+  // "Hors programme" = ni sport ni repos forcé : on prend repos par défaut.
+  if (s.includes('hors programme')) return false;
+  return true;
+}
+
+// Renvoie l'objectif kcal pour une date donnée (variable sport/repos).
+function getTargetForDate(date) {
+  const settings = getSettings();
+  return isSportDay(date) ? settings.kcalTargetSport : settings.kcalTargetRest;
 }
 
 function setDay(dateStr, dayData) {
@@ -1549,7 +1579,7 @@ function renderCalories() {
   const dayData = getDay(ymd(currentDate));
   const meals = dayData.meals || [];
   const total = meals.reduce((s, m) => s + (parseInt(m.kcal) || 0), 0);
-  const target = getSettings().kcalTarget || 1500;
+  const target = getTargetForDate(currentDate);
   const remaining = target - total;
   const pct = Math.min(100, (total / target) * 100);
 
@@ -1718,18 +1748,21 @@ document.getElementById('meal-items').addEventListener('input', (e) => {
   }
 });
 
-// Modal objectif
+// Modal objectif (variable sport/repos)
 document.getElementById('cal-target-display').addEventListener('click', () => {
-  document.getElementById('target-input').value = getSettings().kcalTarget || 1500;
+  const s = getSettings();
+  document.getElementById('target-input-sport').value = s.kcalTargetSport;
+  document.getElementById('target-input-rest').value  = s.kcalTargetRest;
   document.getElementById('target-modal').classList.add('show');
-  setTimeout(() => document.getElementById('target-input').focus(), 50);
+  setTimeout(() => document.getElementById('target-input-sport').focus(), 50);
 });
 document.getElementById('target-cancel').addEventListener('click', () => {
   document.getElementById('target-modal').classList.remove('show');
 });
 document.getElementById('target-save').addEventListener('click', () => {
-  const val = parseInt(document.getElementById('target-input').value) || 1500;
-  setSettings({ ...getSettings(), kcalTarget: val });
+  const sportVal = parseInt(document.getElementById('target-input-sport').value) || 1650;
+  const restVal  = parseInt(document.getElementById('target-input-rest').value)  || 1450;
+  setSettings({ kcalTargetSport: sportVal, kcalTargetRest: restVal });
   document.getElementById('target-modal').classList.remove('show');
   renderCalories();
   if (document.querySelector('.tab.active').dataset.view === 'progress') renderProgress();
@@ -1878,7 +1911,6 @@ function renderWeek() {
 function renderProgress() {
   const state = loadState();
   const today = new Date();
-  const target = getSettings().kcalTarget || 1500;
   let activeDays = 0;
   let sportDone = 0;
   let totalWater = 0;
@@ -1910,7 +1942,9 @@ function renderProgress() {
       const dayKcal = data.meals.reduce((s, m) => s + (parseInt(m.kcal) || 0), 0);
       totalCal += dayKcal;
       calDays++;
-      if (dayKcal > 0 && dayKcal <= target) underTargetDays++;
+      // Cible spécifique au jour (sport ou repos)
+      const dayTarget = getTargetForDate(d);
+      if (dayKcal > 0 && dayKcal <= dayTarget) underTargetDays++;
     }
   }
 
