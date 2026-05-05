@@ -1,7 +1,7 @@
 // Service Worker minimal — cache les assets statiques pour usage hors-ligne
 // La sync API (POST/GET /api/data) passe directement, pas de cache.
 
-const CACHE_NAME = 'elo-forme-v2';
+const CACHE_NAME = 'elo-forme-v3';
 const PRECACHE = [
   '/',
   '/index.html',

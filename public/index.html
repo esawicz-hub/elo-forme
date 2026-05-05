@@ -56,22 +56,43 @@
   .container {
     max-width: 720px;
     margin: 0 auto;
-    /* Padding top généreux : couvre la zone status bar iOS dans tous les modes
-       (Chrome iOS, Safari plein écran, mode standalone PWA). */
-    padding: calc(50px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px));
+    /* Padding top large pour clear la status bar iOS dans tous les modes
+       (Chrome iOS qui ignore parfois env(), Safari plein écran, mode standalone PWA). */
+    padding: calc(70px + env(safe-area-inset-top, 0px)) 20px calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Sur grand écran (ordi), padding plus normal */
+  /* Backdrop opaque sur la zone status bar iOS — empêche le contenu de la page
+     de se mélanger visuellement avec l'heure/batterie/wifi du système.
+     En mobile uniquement (sur ordi pas besoin). */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + env(safe-area-inset-top, 0px));
+    background: var(--bg);
+    /* Petite ombre douce pour la séparation avec le contenu */
+    box-shadow: 0 4px 16px rgba(13, 13, 15, 0.8);
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* Sur grand écran (ordi), padding normal et pas de backdrop */
   @media (min-width: 768px) {
     .container {
       padding: 32px 20px 60px;
+    }
+    body::before {
+      display: none;
     }
   }
 
   /* SYNC STATUS — petit indicateur en haut à droite */
   .sync-pill {
     position: fixed;
-    top: calc(50px + env(safe-area-inset-top, 0px));
+    /* Au-dessus du backdrop (z-index 100 > 50). Position juste sous la zone status bar. */
+    top: calc(70px + env(safe-area-inset-top, 0px));
     right: 12px;
     z-index: 100;
     display: flex;
@@ -94,6 +115,13 @@
   .sync-pill.visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  /* Sur ordi, le pill se positionne en haut classique (pas besoin de la safe-area iOS) */
+  @media (min-width: 768px) {
+    .sync-pill {
+      top: 12px;
+    }
   }
   .sync-pill .dot {
     width: 6px;
@@ -1034,7 +1062,11 @@
     .countdown-days { font-size: 16px; }
     .stats-grid { grid-template-columns: 1fr; }
     .glasses { grid-template-columns: repeat(4, 1fr); }
-    .container { padding: 20px 14px 60px; }
+    /* IMPORTANT : on garde le padding-top large pour que le titre ne touche
+       pas la status bar iOS. On réduit juste les marges latérales et bottom. */
+    .container {
+      padding: calc(70px + env(safe-area-inset-top, 0px)) 14px calc(60px + env(safe-area-inset-bottom, 0px));
+    }
   }
 </style>
 </head>
